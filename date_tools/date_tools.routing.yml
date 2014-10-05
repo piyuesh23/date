@@ -1,0 +1,15 @@
+date_tools.admin:
+  path: '/admin/config/date/tools'
+  defaults:
+    _title: 'Date Tools'
+    _content: '\Drupal\date_tools\Controller\PageController::getAdminPage'
+  requirements:
+    _permission: 'administer date tools'
+
+date_tools.wizard:
+  path: '/admin/config/date/tools/date_wizard'
+  defaults:
+    _title: 'Date Tools'
+    _form: '\Drupal\date_tools\Form\WizardForm'
+  requirements:
+    _permission: 'administer date tools'

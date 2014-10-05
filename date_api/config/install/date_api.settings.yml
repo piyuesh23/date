@@ -1,0 +1,4 @@
+max_year: 4000;
+min_year: 1
+php_min_year: 1901
+api_version: 8.2

@@ -1,0 +1,9 @@
+date_tools.admin:
+  title: 'Date Tools'
+  route_name: date_tools.admin
+  base_route: date_tools.admin
+
+date_tools.wizard:
+  title: 'Date wizard'
+  route_name: date_tools.wizard
+  base_route: date_tools.wizard

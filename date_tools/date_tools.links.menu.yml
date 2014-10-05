@@ -1,0 +1,11 @@
+date_tools.admin:
+  title: 'Date Tools'
+  description: 'Date Wizard and other tools to manage and create dates and calendars.'
+  route_name: date_tools.admin
+  parent: system.admin_config_system
+
+date_tools.wizard:
+  title: 'Date wizard'
+  description: 'Easy creation of date content types and calendars.'
+  route_name: date_tools.wizard
+  parent: date_tools.admin
