@@ -39,6 +39,7 @@ define('DATE_REGEX_ICAL_DATE', '/(\d{4})(\d{2})(\d{2})/');
 define('DATE_REGEX_ICAL_DATETIME', '/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?/');
 
 use Drupal\date\DateApiManager;
+use Drupal\Core\Form\FormStateInterface;
 /**
  * Core DateTime extension module used for as many date operations as possible.
  */
@@ -46,6 +47,7 @@ use Drupal\date\DateApiManager;
 /**
  * Implements hook_help().
  */
+# @todo Update once https://www.drupal.org/node/2351991 lands.
 function date_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'help.page.date_api':
@@ -112,7 +114,7 @@ function date_api_theme($existing, $type, $theme, $path) {
  * Add a form element to configure whether or not week numbers are ISO-8601, the
  * default is FALSE (US/UK/AUS norm).
  */
-function date_api_form_system_regional_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+function date_api_form_system_regional_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
   $form['locale']['date_api_use_iso8601'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use ISO-8601 week numbers'),
@@ -125,9 +127,9 @@ function date_api_form_system_regional_settings_alter(&$form, \Drupal\Core\Form\
 /**
  * Validate that the option to use ISO weeks matches first day of week choice.
  */
-function date_api_form_system_settings_validate(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-  $userInputValues = $form_state->getUserInput();
-  if ($userInputValues['date_api_use_iso8601'] && $userInputValues['date_first_day'] != 1) {
+function date_api_form_system_settings_validate(&$form, FormStateInterface $form_state) {
+  $form_values = $form_state->getUserInput();
+  if ($form_values['date_api_use_iso8601'] && $form_values['date_first_day'] != 1) {
     $form_state->setErrorByName('date_first_day', t('When using ISO-8601 week numbers, the first day of the week must be set to Monday.'));
   }
 }
