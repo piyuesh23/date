@@ -8,6 +8,3 @@ php: 5.2
 stylesheets:
   all:
     - date.css
-files:
-  - date_api.module
-  - date_api_sql.inc
