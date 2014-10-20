@@ -1,7 +1,9 @@
-name: 'Date API'
-description: 'A Date API that can be used by other modules.'
+name: Date API
+description: A Date API that can be used by other modules.
+type: module
 package: Date/Time
 core: 8.x
+configure: date_api.config
 php: 5.2
 stylesheets:
   all:
