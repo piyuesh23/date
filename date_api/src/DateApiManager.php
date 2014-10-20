@@ -1,5 +1,6 @@
 <?php
 
+namespace Drupal\date;
 
 class DateApiManager {
 
@@ -1725,5 +1726,24 @@ class DateApiManager {
 
     return array('errors', $error_messages, 'success' => $success_messages);
 
+  }
+
+  /**
+   * Helper function for creating a date object out of user input.
+   */
+  function date_text_input_date($element, $input) {
+    if (empty($input) || !is_array($input) || !array_key_exists('date', $input) || empty($input['date'])) {
+      return NULL;
+    }
+    $granularity = date_format_order($element['#date_format']);
+    $date = new DateObject($input['date'], $element['#date_timezone'], $element['#date_format']);
+    if (is_object($date)) {
+      $date->limitGranularity($granularity);
+      if ($date->validGranularity($granularity, $element['#date_flexible'])) {
+        date_increment_round($date, $element['#date_increment']);
+      }
+      return $date;
+    }
+    return NULL;
   }
 }
