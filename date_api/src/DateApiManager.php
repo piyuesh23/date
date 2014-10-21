@@ -1243,7 +1243,7 @@ class DateApiManager {
    * @return array
    *   An array of ordered granularity elements from the given format string.
    */
-  function date_format_order($format) {
+  public static function date_format_order($format) {
     $order = array();
     if (empty($format)) {
       return $order;
@@ -1614,7 +1614,7 @@ class DateApiManager {
   /**
    * Helper function to round minutes and seconds to requested value.
    */
-  function date_increment_round(&$date, $increment) {
+  public static function date_increment_round(&$date, $increment) {
     // Round minutes and seconds, if necessary.
     if (is_object($date) && $increment > 1) {
       $day = intval(date_format($date, 'j'));
