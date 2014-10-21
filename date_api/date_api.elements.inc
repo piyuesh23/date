@@ -504,7 +504,7 @@ function date_parts_element($element, $date, $format) {
       if ($element['#date_label_position'] == 'within') {
         if (!empty($sub_element[$field]['#options']) && is_array($sub_element[$field]['#options'])) {
           $sub_element[$field]['#options'] = array(
-              '-' . $label => '-' . $label) + $sub_element[$field]['#options'];
+            '-' . $label => '-' . $label) + $sub_element[$field]['#options'];
         }
         if (empty($sub_element[$field]['#default_value'])) {
           $sub_element[$field]['#default_value'] = '-' . $label;
