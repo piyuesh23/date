@@ -52,7 +52,7 @@ function date_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'help.page.date_api':
       $output = '';
-      $messages = (new DateApiManager())->date_api_status();
+      $messages = DateApiManager::date_api_status();
       $output = '<h2>Date API Status</h2>';
       if (!empty($messages['success'])) {
         $output .= '<ul><li>' . implode('</li><li>', $messages['success']) . '</li></ul>';
