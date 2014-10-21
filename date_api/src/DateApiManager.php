@@ -1692,7 +1692,7 @@ class DateApiManager {
   /**
    * Helper function to retun the status of required date variables.
    */
-  function date_api_status() {
+  public static function date_api_status() {
     $t = get_t();
 
     $error_messages = array();
