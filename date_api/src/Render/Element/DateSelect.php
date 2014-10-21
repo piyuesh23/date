@@ -56,7 +56,7 @@ class DateSelect extends FormElement {
       $date = self::selectInputDate($element, $input);
     }
     elseif (!empty($element['#default_value'])) {
-      $date = parent::getDefaultDate($element);
+      $date = self::getDefaultDate($element);
     }
     $granularity = date_format_order($element['#date_format']);
     $formats = array('year' => 'Y', 'month' => 'n', 'day' => 'j', 'hour' => 'H', 'minute' => 'i', 'second' => 's');
