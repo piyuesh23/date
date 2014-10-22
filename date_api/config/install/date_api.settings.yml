@@ -2,3 +2,6 @@ max_year: 4000;
 min_year: 1
 php_min_year: 1901
 api_version: 8.2
+date_format_medium: 'D, m/d/Y - H:i'
+configurable_timezones: 1
+date_first_day: 0
