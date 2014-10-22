@@ -131,7 +131,7 @@ function date_year_range_element_process($element, &$form_state, $form) {
   $element['#attached']['js'][] = drupal_get_path('module', 'date_api') . '/date_year_range.js';
 
   $context = array(
-   'form' => $form,
+    'form' => $form,
   );
   drupal_alter('date_year_range_process', $element, $form_state, $context);
 
@@ -217,7 +217,7 @@ function date_timezone_element_process($element, &$form_state, $form) {
   }
 
   $context = array(
-   'form' => $form,
+    'form' => $form,
   );
   drupal_alter('date_timezone_process', $element, $form_state, $context);
 
@@ -302,7 +302,7 @@ function date_text_element_process($element, &$form_state, $form) {
   }
 
   $context = array(
-   'form' => $form,
+    'form' => $form,
   );
   drupal_alter('date_text_process', $element, $form_state, $context);
 
@@ -401,7 +401,7 @@ function date_select_element_process($element, &$form_state, $form) {
   }
 
   $context = array(
-   'form' => $form,
+    'form' => $form,
   );
   drupal_alter('date_select_process', $element, $form_state, $context);
 
@@ -518,7 +518,7 @@ function date_parts_element($element, $date, $format) {
       $sub_element[$field]['#title_display'] = in_array($element['#date_label_position'], array('within', 'none')) ? 'invisible' : 'before';
       if ($element['#date_label_position'] == 'within') {
         $sub_element[$field]['#options'] = array(
-          '' => '-' . $label) + $sub_element[$field]['#options'];
+            '' => '-' . $label) + $sub_element[$field]['#options'];
       }
     }
   }

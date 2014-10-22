@@ -1,0 +1,6 @@
+date_api.config:
+  path: 'admin/config/date'
+  defaults:
+    _content: \Drupal\system\Controller\SystemController::systemAdminMenuBlockPage
+  requirements:
+    _permission: administer site configuration

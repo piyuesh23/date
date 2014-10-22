@@ -38,6 +38,8 @@ define('DATE_REGEX_LOOSE', '/(\d{4})-?(\d{1,2})-?(\d{1,2})([T\s]?(\d{2}):?(\d{2}
 define('DATE_REGEX_ICAL_DATE', '/(\d{4})(\d{2})(\d{2})/');
 define('DATE_REGEX_ICAL_DATETIME', '/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?/');
 
+use Drupal\date\DateApiManager;
+use Drupal\Core\Form\FormStateInterface;
 /**
  * Core DateTime extension module used for as many date operations as possible.
  */
@@ -45,11 +47,12 @@ define('DATE_REGEX_ICAL_DATETIME', '/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})
 /**
  * Implements hook_help().
  */
-function date_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#date':
+# @todo Update once https://www.drupal.org/node/2351991 lands.
+function date_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.date_api':
       $output = '';
-      $messages = date_api_status();
+      $messages = DateApiManager::date_api_status();
       $output = '<h2>Date API Status</h2>';
       if (!empty($messages['success'])) {
         $output .= '<ul><li>' . implode('</li><li>', $messages['success']) . '</li></ul>';
@@ -58,7 +61,7 @@ function date_help($path, $arg) {
         $output .= '<h3>Errors</h3><ul class="error"><li>' . implode('</li><li>', $messages['errors']) . '</li></ul>';
       }
 
-      if (module_exists('date_tools')) {
+      if (\Drupal::moduleHandler()->moduleExists('date_tools')) {
         $output .= '<h3>Date Tools</h3>' . t('Dates and calendars can be complicated to set up. The !date_wizard makes it easy to create a simple date content type and with a date field. ', array('!date_wizard' => l(t('Date wizard'), 'admin/config/date/tools/date_wizard')));
       }
       else {
@@ -70,34 +73,6 @@ function date_help($path, $arg) {
       return $output;
       break;
   }
-}
-
-/**
- * Implements hook_menu().
- *
- * Creates a 'Date API' section on the administration page for Date
- * modules to use for their configuration and settings.
- */
-function date_api_menu() {
-  $items['admin/config/date'] = array(
-    'title' => 'Date API',
-    'description' => 'Settings for modules the use the Date API.',
-    'position' => 'left',
-    'weight' => -10,
-    'page callback' => 'system_admin_menu_block_page',
-    'access arguments' => array('administer site configuration'),
-    'file' => 'system.admin.inc',
-    'file path' => drupal_get_path('module', 'system'),
-  );
-  return $items;
-}
-
-/**
- * Implements hook_element_info().
- */
-function date_api_element_info() {
-  module_load_include('inc', 'date_api', 'date_api_elements');
-  return _date_api_element_info();
 }
 
 /**
@@ -133,28 +108,17 @@ function date_api_theme($existing, $type, $theme, $path) {
   );
 }
 
-
-/**
- * Temporary helper to re-create equivalent of content_database_info().
- */
-function date_api_database_info($field, $revision = FIELD_LOAD_CURRENT) {
-  return array(
-    'columns' => $field['storage']['details']['sql'][$revision],
-    'table' => _field_sql_storage_tablename($field),
-  );
-}
-
 /**
  * Implements hook_form_FORM_ID_alter() for system_regional_settings().
  *
  * Add a form element to configure whether or not week numbers are ISO-8601, the
  * default is FALSE (US/UK/AUS norm).
  */
-function date_api_form_system_regional_settings_alter(&$form, &$form_state, $form_id) {
+function date_api_form_system_regional_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
   $form['locale']['date_api_use_iso8601'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use ISO-8601 week numbers'),
-    '#default_value' => variable_get('date_api_use_iso8601', FALSE),
+    '#default_value' => \Drupal::config('date_api.settings')->get('date_api_use_iso8601', FALSE),
     '#description' => t('IMPORTANT! If checked, First day of week MUST be set to Monday'),
   );
   $form['#validate'][] = 'date_api_form_system_settings_validate';
@@ -163,9 +127,9 @@ function date_api_form_system_regional_settings_alter(&$form, &$form_state, $for
 /**
  * Validate that the option to use ISO weeks matches first day of week choice.
  */
-function date_api_form_system_settings_validate(&$form, &$form_state) {
-  $form_values = $form_state['values'];
+function date_api_form_system_settings_validate(&$form, FormStateInterface $form_state) {
+  $form_values = $form_state->getUserInput();
   if ($form_values['date_api_use_iso8601'] && $form_values['date_first_day'] != 1) {
-    form_set_error('date_first_day', t('When using ISO-8601 week numbers, the first day of the week must be set to Monday.'));
+    $form_state->setErrorByName('date_first_day', t('When using ISO-8601 week numbers, the first day of the week must be set to Monday.'));
   }
 }

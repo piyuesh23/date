@@ -1,5 +1,6 @@
 <?php
 
+namespace Drupal\date;
 
 class DateApiManager {
 
@@ -1691,7 +1692,7 @@ class DateApiManager {
   /**
    * Helper function to retun the status of required date variables.
    */
-  function date_api_status() {
+  public static function date_api_status() {
     $t = get_t();
 
     $error_messages = array();
@@ -1725,5 +1726,144 @@ class DateApiManager {
 
     return array('errors', $error_messages, 'success' => $success_messages);
 
+  }
+
+  /**
+   * Helper function for creating a date object out of user input.
+   */
+  function date_text_input_date($element, $input) {
+    if (empty($input) || !is_array($input) || !array_key_exists('date', $input) || empty($input['date'])) {
+      return NULL;
+    }
+    $granularity = date_format_order($element['#date_format']);
+    $date = new DateObject($input['date'], $element['#date_timezone'], $element['#date_format']);
+    if (is_object($date)) {
+      $date->limitGranularity($granularity);
+      if ($date->validGranularity($granularity, $element['#date_flexible'])) {
+        date_increment_round($date, $element['#date_increment']);
+      }
+      return $date;
+    }
+    return NULL;
+  }
+
+  /**
+   * Create replacement values for deprecated timezone names.
+   */
+  function _date_timezone_replacement($old) {
+    $replace = array(
+      'Brazil/Acre' => 'America/Rio_Branco',
+      'Brazil/DeNoronha' => 'America/Noronha',
+      'Brazil/East' => 'America/Recife',
+      'Brazil/West' => 'America/Manaus',
+      'Canada/Atlantic' => 'America/Halifax',
+      'Canada/Central' => 'America/Winnipeg',
+      'Canada/East-Saskatchewan' => 'America/Regina',
+      'Canada/Eastern' => 'America/Toronto',
+      'Canada/Mountain' => 'America/Edmonton',
+      'Canada/Newfoundland' => 'America/St_Johns',
+      'Canada/Pacific' => 'America/Vancouver',
+      'Canada/Saskatchewan' => 'America/Regina',
+      'Canada/Yukon' => 'America/Whitehorse',
+      'CET' => 'Europe/Berlin',
+      'Chile/Continental' => 'America/Santiago',
+      'Chile/EasterIsland' => 'Pacific/Easter',
+      'CST6CDT' => 'America/Chicago',
+      'Cuba' => 'America/Havana',
+      'EET' => 'Europe/Bucharest',
+      'Egypt' => 'Africa/Cairo',
+      'Eire' => 'Europe/Belfast',
+      'EST' => 'America/New_York',
+      'EST5EDT' => 'America/New_York',
+      'GB' => 'Europe/London',
+      'GB-Eire' => 'Europe/Belfast',
+      'Etc/GMT' => 'UTC',
+      'Etc/GMT+0' => 'UTC',
+      'Etc/GMT+1' => 'UTC',
+      'Etc/GMT+10' => 'UTC',
+      'Etc/GMT+11' => 'UTC',
+      'Etc/GMT+12' => 'UTC',
+      'Etc/GMT+2' => 'UTC',
+      'Etc/GMT+3' => 'UTC',
+      'Etc/GMT+4' => 'UTC',
+      'Etc/GMT+5' => 'UTC',
+      'Etc/GMT+6' => 'UTC',
+      'Etc/GMT+7' => 'UTC',
+      'Etc/GMT+8' => 'UTC',
+      'Etc/GMT+9' => 'UTC',
+      'Etc/GMT-0' => 'UTC',
+      'Etc/GMT-1' => 'UTC',
+      'Etc/GMT-10' => 'UTC',
+      'Etc/GMT-11' => 'UTC',
+      'Etc/GMT-12' => 'UTC',
+      'Etc/GMT-13' => 'UTC',
+      'Etc/GMT-14' => 'UTC',
+      'Etc/GMT-2' => 'UTC',
+      'Etc/GMT-3' => 'UTC',
+      'Etc/GMT-4' => 'UTC',
+      'Etc/GMT-5' => 'UTC',
+      'Etc/GMT-6' => 'UTC',
+      'Etc/GMT-7' => 'UTC',
+      'Etc/GMT-8' => 'UTC',
+      'Etc/GMT-9' => 'UTC',
+      'Etc/GMT0' => 'UTC',
+      'Etc/Greenwich' => 'UTC',
+      'Etc/UCT' => 'UTC',
+      'Etc/Universal' => 'UTC',
+      'Etc/UTC' => 'UTC',
+      'Etc/Zulu' => 'UTC',
+      'Factory' => 'UTC',
+      'GMT' => 'UTC',
+      'GMT+0' => 'UTC',
+      'GMT-0' => 'UTC',
+      'GMT0' => 'UTC',
+      'Hongkong' => 'Asia/Hong_Kong',
+      'HST' => 'Pacific/Honolulu',
+      'Iceland' => 'Atlantic/Reykjavik',
+      'Iran' => 'Asia/Tehran',
+      'Israel' => 'Asia/Tel_Aviv',
+      'Jamaica' => 'America/Jamaica',
+      'Japan' => 'Asia/Tokyo',
+      'Kwajalein' => 'Pacific/Kwajalein',
+      'Libya' => 'Africa/Tunis',
+      'MET' => 'Europe/Budapest',
+      'Mexico/BajaNorte' => 'America/Tijuana',
+      'Mexico/BajaSur' => 'America/Mazatlan',
+      'Mexico/General' => 'America/Mexico_City',
+      'MST' => 'America/Boise',
+      'MST7MDT' => 'America/Boise',
+      'Navajo' => 'America/Phoenix',
+      'NZ' => 'Pacific/Auckland',
+      'NZ-CHAT' => 'Pacific/Chatham',
+      'Poland' => 'Europe/Warsaw',
+      'Portugal' => 'Europe/Lisbon',
+      'PRC' => 'Asia/Chongqing',
+      'PST8PDT' => 'America/Los_Angeles',
+      'ROC' => 'Asia/Taipei',
+      'ROK' => 'Asia/Seoul',
+      'Singapore' => 'Asia/Singapore',
+      'Turkey' => 'Europe/Istanbul',
+      'US/Alaska' => 'America/Anchorage',
+      'US/Aleutian' => 'America/Adak',
+      'US/Arizona' => 'America/Phoenix',
+      'US/Central' => 'America/Chicago',
+      'US/East-Indiana' => 'America/Indianapolis',
+      'US/Eastern' => 'America/New_York',
+      'US/Hawaii' => 'Pacific/Honolulu',
+      'US/Indiana-Starke' => 'America/Indiana/Knox',
+      'US/Michigan' => 'America/Detroit',
+      'US/Mountain' => 'America/Boise',
+      'US/Pacific' => 'America/Los_Angeles',
+      'US/Pacific-New' => 'America/Los_Angeles',
+      'US/Samoa' => 'Pacific/Samoa',
+      'W-SU' => 'Europe/Moscow',
+      'WET' => 'Europe/Paris',
+    );
+    if (array_key_exists($old, $replace)) {
+      return $replace[$old];
+    }
+    else {
+      return $old;
+    }
   }
 }
