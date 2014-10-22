@@ -5,3 +5,4 @@ api_version: 8.2
 date_format_medium: 'D, m/d/Y - H:i'
 configurable_timezones: 1
 date_first_day: 0
+date_api_use_iso8601: FALSE

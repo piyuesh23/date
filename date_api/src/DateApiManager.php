@@ -219,7 +219,7 @@ class DateApiManager {
    *   An array of weekdays reordered to match the first day of the week.
    */
   public static function date_week_days_ordered($weekdays) {
-    $first_day = \Drupal::config('date_api.settings')->get('date_first_day', 0);
+    $first_day = \Drupal::config('date_api.settings')->get('date_first_day');
     if ($first_day > 0) {
       for ($i = 1; $i <= $first_day; $i++) {
         $last = array_shift($weekdays);
@@ -921,7 +921,7 @@ class DateApiManager {
    *   A numeric array containing the start and end dates of a week.
    */
   public static function date_week_range($week, $year) {
-    if (\Drupal::config('date_api.settings')->get('date_api_use_iso8601', FALSE)) {
+    if (\Drupal::config('date_api.settings')->get('date_api_use_iso8601')) {
       return self::date_iso_week_range($week, $year);
     }
     $min_date = new DateObject($year . '-01-01 00:00:00');
@@ -931,7 +931,7 @@ class DateApiManager {
     date_modify($min_date, '+' . strval(7 * ($week - 1)) . ' days');
 
     // Move backwards to the first day of the week.
-    $first_day = \Drupal::config('date_api.settings')->get('date_first_day', 0);
+    $first_day = \Drupal::config('date_api.settings')->get('date_first_day');
     $day_wday = date_format($min_date, 'w');
     date_modify($min_date, '-' . strval((7 + $day_wday - $first_day) % 7) . ' days');
 
