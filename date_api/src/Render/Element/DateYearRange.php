@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Element\FormElement;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\date_api\DateApiManager;
 
 /**
  * Provides a one-line text field form element.
@@ -95,10 +96,10 @@ class DateYearRange extends FormElement {
   protected function validate(&$element,FormStateInterface &$form_state, $form) {
     // Recombine the two submitted form values into the -3:+3 format we will
     // validate and save.
-    $year_range_submitted = NestedArray::setValue($form_state['values'], $element['#parents']);
+    $year_range_submitted = NestedArray::getValue($form_state['values'], $element['#parents']);
     $year_range = $year_range_submitted['years_back'] . ':' . $year_range_submitted['years_forward'];
-    drupal_array_set_nested_value($form_state['values'], $element['#parents'], $year_range);
-    if (!date_range_valid($year_range)) {
+    NestedArray::getValue($form_state['values'], $element['#parents'], $year_range);
+    if (!DateApiManager::date_range_valid($year_range)) {
       $form_state->setError($element['years_back'], t('Starting year must be in the format -9, or an absolute year such as 1980.'));
       $form_state->setError($element['years_forward'], t('Ending year must be in the format +9, or an absolute year such as 2030.'));
     }

@@ -9,15 +9,15 @@ namespace Drupal\date_api\Render\Element;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
-use Drupal\Core\Render\Element\FormElement;
 use Drupal\date_api\DateObject;
+use Drupal\date_api\DateApiManager;
 
 /**
  * Provides a one-line text field form element.
  *
  * @FormElement("date_select")
  */
-class DateSelect extends FormElement {
+class DateSelect extends DateApiElementBase {
 
   /**
    * {@inheritdoc}
@@ -27,7 +27,7 @@ class DateSelect extends FormElement {
     return array(
       '#input' => TRUE,
       '#tree' => TRUE,
-      '#date_timezone' => date_default_timezone(),
+      '#date_timezone' => DateApiManager::date_default_timezone(),
       '#date_flexible' => 0,
       '#date_format' => \Drupal::config('core.date_formats.short')->get('pattern', 'm/d/Y - H:i'),
       '#date_text_parts' => array(),
@@ -58,11 +58,11 @@ class DateSelect extends FormElement {
     elseif (!empty($element['#default_value'])) {
       $date = self::getDefaultDate($element);
     }
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
     $formats = array('year' => 'Y', 'month' => 'n', 'day' => 'j', 'hour' => 'H', 'minute' => 'i', 'second' => 's');
     foreach ($granularity as $field) {
       if ($field != 'timezone') {
-        $return[$field] = date_is_date($date) ? $date->format($formats[$field]) : '';
+        $return[$field] = DateApiManager::date_is_date($date) ? $date->format($formats[$field]) : '';
       }
     }
     return $return;
@@ -72,12 +72,12 @@ class DateSelect extends FormElement {
    * Process an individual date element.
    */
   protected function process(&$element, &$form_state, $form) {
-    if (date_hidden_element($element)) {
+    if (DateApiManager::date_hidden_element($element)) {
       return $element;
     }
 
     $date = NULL;
-    $granularity = date_format_order($element['#date_format']);
+    DateApiManager::date_format_order($element['#date_format']);
 
     if (is_array($element['#default_value'])) {
       $date = self::selectInputDate($element, $element['#default_value']);
@@ -92,9 +92,8 @@ class DateSelect extends FormElement {
     $element += (array) date_parts_element($element, $date, $element['#date_format']);
 
     // Store a hidden value for all date parts not in the current display.
-    $granularity = date_format_order($element['#date_format']);
-    $formats = array('year' => 'Y', 'month' => 'n', 'day' => 'j', 'hour' => 'H', 'minute' => 'i', 'second' => 's');
-    foreach (date_nongranularity($granularity) as $field) {
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
+    foreach (DateApiManager::date_nongranularity($granularity) as $field) {
       if ($field != 'timezone') {
         $element[$field] = array(
           '#type' => 'value',
@@ -112,7 +111,8 @@ class DateSelect extends FormElement {
     $context = array(
       'form' => $form,
     );
-    drupal_alter('date_select_process', $element, $form_state, $context);
+
+    \Drupal::moduleHandler()->alter('date_select_process', $element, $form_state, $context);
   }
 
   /**
@@ -130,7 +130,7 @@ class DateSelect extends FormElement {
         return NULL;
       }
     }
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
     if (isset($input['ampm'])) {
       if ($input['ampm'] == 'pm' && $input['hour'] < 12) {
         $input['hour'] += 12;
@@ -142,7 +142,7 @@ class DateSelect extends FormElement {
     unset($input['ampm']);
 
     // Make the input match the granularity.
-    foreach (date_nongranularity($granularity) as $part) {
+    foreach (DateApiManager::date_nongranularity($granularity) as $part) {
       unset($input[$part]);
     }
 
@@ -150,7 +150,7 @@ class DateSelect extends FormElement {
     if (is_object($date)) {
       $date->limitGranularity($granularity);
       if ($date->validGranularity($granularity, $element['#date_flexible'])) {
-        date_increment_round($date, $element['#date_increment']);
+        DateApiManager::date_increment_round($date, $element['#date_increment']);
       }
       return $date;
     }

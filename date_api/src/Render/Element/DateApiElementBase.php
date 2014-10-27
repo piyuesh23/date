@@ -9,7 +9,7 @@ namespace Drupal\date_api\Render\Element;
 
 use Drupal\Core\Render\Element\FormElement;
 use Drupal\date_api\DateObject;
-use Drupal\date\DateApiManager;
+use Drupal\date_api\DateApiManager;
 
 /**
  * Provides a base class for date elements.
