@@ -1,6 +1,9 @@
 <?php
 
-namespace Drupal\date;
+namespace Drupal\date_api;
+
+use Drupal\Core\Datetime\Entity\DateFormat;
+use Drupal\Core\Url;
 
 class DateApiManager {
 
@@ -18,7 +21,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the element is effectively hidden, FALSE otherwise.
    */
-  function date_hidden_element($element) {
+  public static function date_hidden_element($element) {
     // @TODO What else needs to be tested to see if dates are hidden or disabled?
     if ((isset($element['#access']) && empty($element['#access']))
       || !empty($element['#programmed'])
@@ -37,7 +40,7 @@ class DateApiManager {
    * @return string
    *   A date type format, like 'Y-m-d H:i:s'.
    */
-  function date_type_format($type) {
+  public static function date_type_format($type) {
     switch ($type) {
       case DATE_ISO:
         return DATE_FORMAT_ISO;
@@ -59,7 +62,7 @@ class DateApiManager {
    * @return array
    *   An array of month names.
    */
-  function date_month_names_untranslated() {
+  public static function date_month_names_untranslated() {
     static $month_names;
     if (empty($month_names)) {
       $month_names = array(
@@ -90,9 +93,9 @@ class DateApiManager {
    * @return array
    *   An array of month names.
    */
-  function date_month_names($required = FALSE) {
+  public static function date_month_names($required = FALSE) {
     $month_names = array();
-    foreach (date_month_names_untranslated() as $key => $month) {
+    foreach (self::date_month_names_untranslated() as $key => $month) {
       $month_names[$key] = t($month, array(), array('context' => 'Long month name'));
     }
     $none = array('' => '');
@@ -111,9 +114,9 @@ class DateApiManager {
    * @return array
    *   An array of month abbreviations.
    */
-  function date_month_names_abbr($required = FALSE, $length = 3) {
+  public static function date_month_names_abbr($required = FALSE, $length = 3) {
     $month_names = array();
-    foreach (date_month_names_untranslated() as $key => $month) {
+    foreach (self::date_month_names_untranslated() as $key => $month) {
       if ($length == 3) {
         $month_names[$key] = t(substr($month, 0, $length), array());
       }
@@ -137,7 +140,7 @@ class DateApiManager {
    * @return array
    *   An array of week day names
    */
-  function date_week_days_untranslated($refresh = TRUE) {
+  public static function date_week_days_untranslated($refresh = TRUE) {
     static $weekdays;
     if ($refresh || empty($weekdays)) {
       $weekdays = array(
@@ -163,9 +166,9 @@ class DateApiManager {
    * @return array
    *   An array of week day names
    */
-  function date_week_days($required = FALSE, $refresh = TRUE) {
+  public static function date_week_days($required = FALSE, $refresh = TRUE) {
     $weekdays = array();
-    foreach (date_week_days_untranslated() as $key => $day) {
+    foreach (self::date_week_days_untranslated() as $key => $day) {
       $weekdays[$key] = t($day, array(), array('context' => ''));
     }
     $none = array('' => '');
@@ -186,7 +189,7 @@ class DateApiManager {
    * @return array
    *   An array of week day abbreviations
    */
-  function date_week_days_abbr($required = FALSE, $refresh = TRUE, $length = 3) {
+  public static function date_week_days_abbr($required = FALSE, $refresh = TRUE, $length = 3) {
     $weekdays = array();
     switch ($length) {
       case 1:
@@ -199,7 +202,7 @@ class DateApiManager {
         $context = '';
         break;
     }
-    foreach (date_week_days_untranslated() as $key => $day) {
+    foreach (self::date_week_days_untranslated() as $key => $day) {
       $weekdays[$key] = t(substr($day, 0, $length), array(), array('context' => $context));
     }
     $none = array('' => '');
@@ -215,8 +218,8 @@ class DateApiManager {
    * @return array
    *   An array of weekdays reordered to match the first day of the week.
    */
-  function date_week_days_ordered($weekdays) {
-    $first_day = variable_get('date_first_day', 0);
+  public static function date_week_days_ordered($weekdays) {
+    $first_day = \Drupal::config('date_api.settings')->get('date_first_day');
     if ($first_day > 0) {
       for ($i = 1; $i <= $first_day; $i++) {
         $last = array_shift($weekdays);
@@ -240,7 +243,7 @@ class DateApiManager {
    * @return array
    *   An array of years in the selected range.
    */
-  function date_years($min = 0, $max = 0, $required = FALSE) {
+  public static function date_years($min = 0, $max = 0, $required = FALSE) {
     // Ensure $min and $max are valid values.
     if (empty($min)) {
       $min = intval(date('Y', REQUEST_TIME) - 3);
@@ -249,7 +252,7 @@ class DateApiManager {
       $max = intval(date('Y', REQUEST_TIME) + 3);
     }
     $none = array(0 => '');
-    return !$required ? $none + drupal_map_assoc(range($min, $max)) : drupal_map_assoc(range($min, $max));
+    return !$required ? $none + array_combine(range($min, $max), range($min, $max)) : array_combine(range($min, $max), range($min, $max));
   }
 
   /**
@@ -266,7 +269,7 @@ class DateApiManager {
    * @return array
    *   An array of days for the selected month.
    */
-  function date_days($required = FALSE, $month = NULL, $year = NULL) {
+  public static function date_days($required = FALSE, $month = NULL, $year = NULL) {
     // If we have a month and year, find the right last day of the month.
     if (!empty($month) && !empty($year)) {
       $date = new DateObject($year . '-' . $month . '-01 00:00:00', 'UTC');
@@ -277,7 +280,7 @@ class DateApiManager {
       $max = 31;
     }
     $none = array(0 => '');
-    return !$required ? $none + drupal_map_assoc(range(1, $max)) : drupal_map_assoc(range(1, $max));
+    return !$required ? $none + array_combine(range(1, $max), range(1, $max)) : array_combine(range(1, $max), range(1, $max));
   }
 
   /**
@@ -292,7 +295,7 @@ class DateApiManager {
    * @return array
    *   An array of hours in the selected format.
    */
-  function date_hours($format = 'H', $required = FALSE) {
+  public static function date_hours($format = 'H', $required = FALSE) {
     $hours = array();
     if ($format == 'h' || $format == 'g') {
       $min = 1;
@@ -321,7 +324,7 @@ class DateApiManager {
    * @return array
    *   An array of minutes in the selected format.
    */
-  function date_minutes($format = 'i', $required = FALSE, $increment = 1) {
+  public static function date_minutes($format = 'i', $required = FALSE, $increment = 1) {
     $minutes = array();
     // Ensure $increment has a value so we don't loop endlessly.
     if (empty($increment)) {
@@ -346,7 +349,7 @@ class DateApiManager {
    * @return array
    *   An array of seconds in the selected format.
    */
-  function date_seconds($format = 's', $required = FALSE, $increment = 1) {
+  public static function date_seconds($format = 's', $required = FALSE, $increment = 1) {
     $seconds = array();
     // Ensure $increment has a value so we don't loop endlessly.
     if (empty($increment)) {
@@ -369,7 +372,7 @@ class DateApiManager {
    * @return array
    *   An array of AM and PM options.
    */
-  function date_ampm($required = FALSE) {
+  public static function date_ampm($required = FALSE) {
     $none = array('' => '');
     $ampm = array(
       'am' => t('am', array(), array('context' => 'ampm')),
@@ -388,7 +391,7 @@ class DateApiManager {
    * @return array
    *   An array of date() format letters and their regex equivalents.
    */
-  function date_format_patterns($strict = FALSE) {
+  public static function date_format_patterns($strict = FALSE) {
     return array(
       'd' => '\d{' . ($strict ? '2' : '1,2') . '}',
       'm' => '\d{' . ($strict ? '2' : '1,2') . '}',
@@ -437,7 +440,7 @@ class DateApiManager {
    * @return array
    *   An array of translated date parts, keyed by their machine name.
    */
-  function date_granularity_names() {
+  public static function date_granularity_names() {
     return array(
       'year' => t('Year', array(), array('context' => 'datetime')),
       'month' => t('Month', array(), array('context' => 'datetime')),
@@ -454,7 +457,7 @@ class DateApiManager {
    * @param array $granularity
    *   An array of date parts.
    */
-  function date_granularity_sorted($granularity) {
+  public static function date_granularity_sorted($granularity) {
     return array_intersect(array('year', 'month', 'day', 'hour', 'minute', 'second'), $granularity);
   }
 
@@ -468,7 +471,7 @@ class DateApiManager {
    *   A granularity array containing the given precision and all those above it.
    *   For example, passing in 'month' will return array('year', 'month').
    */
-  function date_granularity_array_from_precision($precision) {
+  public static function date_granularity_array_from_precision($precision) {
     $granularity_array = array('year', 'month', 'day', 'hour', 'minute', 'second');
     switch ($precision) {
       case 'year':
@@ -495,8 +498,8 @@ class DateApiManager {
    * @return string
    *   The most precise element in a granularity array.
    */
-  function date_granularity_precision($granularity_array) {
-    $input = date_granularity_sorted($granularity_array);
+  public static function date_granularity_precision($granularity_array) {
+    $input = self::date_granularity_sorted($granularity_array);
     return array_pop($input);
   }
 
@@ -506,9 +509,9 @@ class DateApiManager {
    * @todo This function is no longer used as of
    * http://drupalcode.org/project/date.git/commit/07efbb5.
    */
-  function date_granularity_format($granularity) {
+  public static function date_granularity_format($granularity) {
     if (is_array($granularity)) {
-      $granularity = date_granularity_precision($granularity);
+      $granularity = self::date_granularity_precision($granularity);
     }
     $format = 'Y-m-d H:i:s';
     switch ($granularity) {
@@ -541,10 +544,10 @@ class DateApiManager {
    * @return array
    *   An array of timezone names.
    */
-  function date_timezone_names($required = FALSE, $refresh = FALSE) {
+  public static function date_timezone_names($required = FALSE, $refresh = FALSE) {
     static $zonenames;
     if (empty($zonenames) || $refresh) {
-      $cached = cache_get('date_timezone_identifiers_list');
+      $cached = \Drupal::cache()->get('date_timezone_identifiers_list');
       $zonenames = !empty($cached) ? $cached->data : array();
       if ($refresh || empty($cached) || empty($zonenames)) {
         $data = timezone_identifiers_list();
@@ -559,7 +562,7 @@ class DateApiManager {
         }
 
         if (!empty($zonenames)) {
-          cache_set('date_timezone_identifiers_list', $zonenames);
+          \Drupal::cache()->set('date_timezone_identifiers_list', $zonenames);
         }
       }
       foreach ($zonenames as $zone) {
@@ -583,12 +586,12 @@ class DateApiManager {
    * @return array
    *   An array of allowed timezone abbreviations.
    */
-  function date_timezone_abbr($refresh = FALSE) {
-    $cached = cache_get('date_timezone_abbreviations');
+  public static function date_timezone_abbr($refresh = FALSE) {
+    $cached = \Drupal::cache()->get('date_timezone_abbreviations');
     $data = isset($cached->data) ? $cached->data : array();
     if (empty($data) || $refresh) {
       $data = array_keys(timezone_abbreviations_list());
-      cache_set('date_timezone_abbreviations', $data);
+      \Drupal::cache()->set('date_timezone_abbreviations', $data);
     }
     return $data;
   }
@@ -619,17 +622,17 @@ class DateApiManager {
    *
    * @see format_date()
    */
-  function date_format_date($date, $type = 'medium', $format = '', $langcode = NULL) {
+  public static function date_format_date($date, $type = 'medium', $format = '', $langcode = NULL) {
     if (empty($date)) {
       return '';
     }
     if ($type != 'custom') {
-      $format = variable_get('date_format_' . $type);
+      $format = \Drupal::config('date_api.settings')->get('date_format_' . $type);
     }
     if ($type != 'custom' && empty($format)) {
-      $format = variable_get('date_format_medium', 'D, m/d/Y - H:i');
+      $format = \Drupal::config('date_api.settings')->get('date_format_medium');
     }
-    $format = date_limit_format($format, $date->granularity);
+    $format = self::date_limit_format($format, $date->granularity);
     $max = strlen($format);
     $datestring = '';
     for ($i = 0; $i < $max; $i++) {
@@ -670,7 +673,7 @@ class DateApiManager {
           $datestring .= $format[++$i];
           break;
         case 'r':
-          $datestring .= date_format_date($date, 'custom', 'D, d M Y H:i:s O', $langcode);
+          $datestring .= self::date_format_date($date, 'custom', 'D, d M Y H:i:s O', $langcode);
           break;
         default:
           if (strpos('BdcgGhHiIjLmnNosStTuUwWYyz', $c) !== FALSE) {
@@ -697,19 +700,20 @@ class DateApiManager {
    *
    * @see format_interval()
    */
-  function date_format_interval($date, $granularity = 2, $display_ago = TRUE) {
+  public static function date_format_interval($date, $granularity = 2, $display_ago = TRUE) {
     // If no date is sent, then return nothing.
     if (empty($date)) {
       return NULL;
     }
 
+    $date_formatter_service = \Drupal::service('date.formatter');
     $interval = REQUEST_TIME - $date->format('U');
     if ($interval > 0) {
-      return $display_ago ? t('!time ago', array('!time' => format_interval($interval, $granularity))) :
-        t('!time', array('!time' => format_interval($interval, $granularity)));
+      return $display_ago ? t('!time ago', array('!time' => $date_formatter_service->formatInterval($interval, $granularity))) :
+        t('!time', array('!time' => $date_formatter_service->formatInterval($interval, $granularity)));
     }
     else {
-      return format_interval(abs($interval), $granularity);
+      return $date_formatter_service->formatInterval(abs($interval), $granularity);
     }
   }
 
@@ -726,7 +730,7 @@ class DateApiManager {
    * @return object
    *   The current time as a date object.
    */
-  function date_now($timezone = NULL, $reset = FALSE) {
+  public static function date_now($timezone = NULL, $reset = FALSE) {
     if ($reset) {
       drupal_static_reset(__FUNCTION__ . $timezone);
     }
@@ -753,10 +757,10 @@ class DateApiManager {
    * @return bool
    *   TRUE if the timezone is valid, FALSE otherwise.
    */
-  function date_timezone_is_valid($timezone) {
+  public static function date_timezone_is_valid($timezone) {
     static $timezone_names;
     if (empty($timezone_names)) {
-      $timezone_names = array_keys(date_timezone_names(TRUE));
+      $timezone_names = array_keys(self::date_timezone_names(TRUE));
     }
     return in_array($timezone, $timezone_names);
   }
@@ -771,13 +775,13 @@ class DateApiManager {
    * @return string
    *   The default timezone for a user, if available, otherwise the site.
    */
-  function date_default_timezone($check_user = TRUE) {
+  public static function date_default_timezone($check_user = TRUE) {
     global $user;
-    if ($check_user && variable_get('configurable_timezones', 1) && !empty($user->timezone)) {
+    if ($check_user && \Drupal::config('date_api.settings')->get('configurable_timezones') && !empty($user->timezone)) {
       return $user->timezone;
     }
     else {
-      $default = variable_get('date_default_timezone', '');
+      $default = \Drupal::config('date_api.settings')->get('date_default_timezone');
       return empty($default) ? 'UTC' : $default;
     }
   }
@@ -792,16 +796,16 @@ class DateApiManager {
    * @return object
    *   The default timezone for a user, if available, otherwise the site.
    */
-  function date_default_timezone_object($check_user = TRUE) {
-    return timezone_open(date_default_timezone($check_user));
+  public static function date_default_timezone_object($check_user = TRUE) {
+    return timezone_open(self::date_default_timezone($check_user));
   }
 
   /**
    * Identifies the number of days in a month for a date.
    */
-  function date_days_in_month($year, $month) {
+  public static function date_days_in_month($year, $month) {
     // Pick a day in the middle of the month to avoid timezone shifts.
-    $datetime = date_pad($year, 4) . '-' . date_pad($month) . '-15 00:00:00';
+    $datetime = self::date_pad($year, 4) . '-' . self::date_pad($month) . '-15 00:00:00';
     $date = new DateObject($datetime);
     return $date->format('t');
   }
@@ -815,9 +819,9 @@ class DateApiManager {
    * @return integer
    *   The number of days in the year.
    */
-  function date_days_in_year($date = NULL) {
+  public static function date_days_in_year($date = NULL) {
     if (empty($date)) {
-      $date = date_now();
+      $date = self::date_now();
     }
     elseif (!is_object($date)) {
       $date = new DateObject($date);
@@ -844,9 +848,9 @@ class DateApiManager {
    * @return integer
    *   The number of ISO weeks in a year.
    */
-  function date_iso_weeks_in_year($date = NULL) {
+  public static function date_iso_weeks_in_year($date = NULL) {
     if (empty($date)) {
-      $date = date_now();
+      $date = self::date_now();
     }
     elseif (!is_object($date)) {
       $date = new DateObject($date);
@@ -868,9 +872,9 @@ class DateApiManager {
    * @return int
    *   The number of the day in the week.
    */
-  function date_day_of_week($date = NULL) {
+  public static function date_day_of_week($date = NULL) {
     if (empty($date)) {
-      $date = date_now();
+      $date = self::date_now();
     }
     elseif (!is_object($date)) {
       $date = new DateObject($date);
@@ -894,12 +898,12 @@ class DateApiManager {
    * @return string
    *   The name of the day in the week for that date.
    */
-  function date_day_of_week_name($date = NULL, $abbr = TRUE) {
+  public static function date_day_of_week_name($date = NULL, $abbr = TRUE) {
     if (!is_object($date)) {
       $date = new DateObject($date);
     }
-    $dow = date_day_of_week($date);
-    $days = $abbr ? date_week_days_abbr() : date_week_days();
+    $dow = self::date_day_of_week($date);
+    $days = $abbr ? self::date_week_days_abbr() : self::date_week_days();
     return $days[$dow];
   }
 
@@ -916,18 +920,18 @@ class DateApiManager {
    * @return array
    *   A numeric array containing the start and end dates of a week.
    */
-  function date_week_range($week, $year) {
-    if (variable_get('date_api_use_iso8601', FALSE)) {
-      return date_iso_week_range($week, $year);
+  public static function date_week_range($week, $year) {
+    if (\Drupal::config('date_api.settings')->get('date_api_use_iso8601')) {
+      return self::date_iso_week_range($week, $year);
     }
     $min_date = new DateObject($year . '-01-01 00:00:00');
-    $min_date->setTimezone(date_default_timezone_object());
+    $min_date->setTimezone(self::date_default_timezone_object());
 
     // Move to the right week.
     date_modify($min_date, '+' . strval(7 * ($week - 1)) . ' days');
 
     // Move backwards to the first day of the week.
-    $first_day = variable_get('date_first_day', 0);
+    $first_day = \Drupal::config('date_api.settings')->get('date_first_day');
     $day_wday = date_format($min_date, 'w');
     date_modify($min_date, '-' . strval((7 + $day_wday - $first_day) % 7) . ' days');
 
@@ -952,10 +956,10 @@ class DateApiManager {
    * @return array
    *   A numeric array containing the start and end dates of an ISO week.
    */
-  function date_iso_week_range($week, $year) {
+  public static function date_iso_week_range($week, $year) {
     // Get to the last ISO week of the previous year.
     $min_date = new DateObject(($year - 1) . '-12-28 00:00:00');
-    date_timezone_set($min_date, date_default_timezone_object());
+    date_timezone_set($min_date, self::date_default_timezone_object());
 
     // Find the first day of the first ISO week in the year.
     date_modify($min_date, '+1 Monday');
@@ -982,10 +986,10 @@ class DateApiManager {
    * @return int
    *   Number of calendar weeks in selected year.
    */
-  function date_weeks_in_year($year) {
+  public static function date_weeks_in_year($year) {
     $date = new DateObject(($year + 1) . '-01-01 12:00:00', 'UTC');
     date_modify($date, '-1 day');
-    return date_week($date->format('Y-m-d'));
+    return self::date_week($date->format('Y-m-d'));
   }
 
   /**
@@ -999,14 +1003,14 @@ class DateApiManager {
    * @return int
    *   The calendar week number.
    */
-  function date_week($date) {
+  public static function date_week($date) {
     $date = substr($date, 0, 10);
     $parts = explode('-', $date);
 
     $date = new DateObject($date . ' 12:00:00', 'UTC');
 
     // If we are using ISO weeks, this is easy.
-    if (variable_get('date_api_use_iso8601', FALSE)) {
+    if (\Drupal::config('date_api.settings')->get('date_api_use_iso8601', FALSE)) {
       return intval($date->format('W'));
     }
 
@@ -1030,7 +1034,7 @@ class DateApiManager {
     }
 
     // Convert to ISO-8601 day number, to match weeks calculated above.
-    $iso_first_day = 1 + (variable_get('date_first_day', 0) + 6) % 7;
+    $iso_first_day = 1 + (\Drupal::config('date_api.settings')->get('date_first_day') + 6) % 7;
 
     // If it's before the starting day, it's the previous week.
     if (intval($date->format('N')) < $iso_first_day) {
@@ -1058,7 +1062,7 @@ class DateApiManager {
    * @return string
    *   The padded value.
    */
-  function date_pad($value, $size = 2) {
+  public static function date_pad($value, $size = 2) {
     return sprintf("%0" . $size . "d", $value);
   }
 
@@ -1071,7 +1075,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the granularity contains a time portion, FALSE otherwise.
    */
-  function date_has_time($granularity) {
+  public static function date_has_time($granularity) {
     if (!is_array($granularity)) {
       $granularity = array();
     }
@@ -1087,7 +1091,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the granularity contains a date portion, FALSE otherwise.
    */
-  function date_has_date($granularity) {
+  public static function date_has_date($granularity) {
     if (!is_array($granularity)) {
       $granularity = array();
     }
@@ -1105,14 +1109,14 @@ class DateApiManager {
    * @return string
    *   The date format for the given part.
    */
-  function date_part_format($part, $format) {
+  public static function date_part_format($part, $format) {
     switch ($part) {
       case 'date':
-        return date_limit_format($format, array('year', 'month', 'day'));
+        return self::date_limit_format($format, array('year', 'month', 'day'));
       case 'time':
-        return date_limit_format($format, array('hour', 'minute', 'second'));
+        return self::date_limit_format($format, array('hour', 'minute', 'second'));
       default:
-        return date_limit_format($format, array($part));
+        return self::date_limit_format($format, array($part));
     }
   }
 
@@ -1131,7 +1135,7 @@ class DateApiManager {
    * @return string
    *   The format string with all other elements removed.
    */
-  function date_limit_format($format, $granularity) {
+  public static function date_limit_format($format, $granularity) {
     // Use the advanced drupal_static() pattern to improve performance.
     static $drupal_static_fast;
     if (!isset($drupal_static_fast)) {
@@ -1156,18 +1160,18 @@ class DateApiManager {
     $format = strtr($format, $replace);
 
     // Get the 'T' out of ISO date formats that don't have both date and time.
-    if (!date_has_time($granularity) || !date_has_date($granularity)) {
+    if (!self::date_has_time($granularity) || !self::date_has_date($granularity)) {
       $format = str_replace('\T', ' ', $format);
       $format = str_replace('T', ' ', $format);
     }
 
     $regex = array();
-    if (!date_has_time($granularity)) {
+    if (!self::date_has_time($granularity)) {
       $regex[] = '((?<!\\\\)[a|A])';
     }
     // Create regular expressions to remove selected values from string.
     // Use (?<!\\\\) to keep escaped letters from being removed.
-    foreach (date_nongranularity($granularity) as $element) {
+    foreach (self::date_nongranularity($granularity) as $element) {
       switch ($element) {
         case 'year':
           $regex[] = '([\-/\.,:]?\s?(?<!\\\\)[Yy])';
@@ -1243,7 +1247,7 @@ class DateApiManager {
    * @return array
    *   An array of ordered granularity elements from the given format string.
    */
-  function date_format_order($format) {
+  public static function date_format_order($format) {
     $order = array();
     if (empty($format)) {
       return $order;
@@ -1295,7 +1299,7 @@ class DateApiManager {
    * @return array
    *   A reduced set of granularitiy elements.
    */
-  function date_nongranularity($granularity) {
+  public static function date_nongranularity($granularity) {
     return array_diff(array('year', 'month', 'day', 'hour', 'minute', 'second', 'timezone'), (array) $granularity);
   }
 
@@ -1310,18 +1314,18 @@ class DateApiManager {
    * @return string
    *   The timezone string.
    */
-  function date_get_timezone($handling, $timezone = '') {
+  public static function date_get_timezone($handling, $timezone = '') {
     switch ($handling) {
       case 'date':
-        $timezone = !empty($timezone) ? $timezone : date_default_timezone();
+        $timezone = !empty($timezone) ? $timezone : self::date_default_timezone();
         break;
       case 'utc':
         $timezone = 'UTC';
         break;
       default:
-        $timezone = date_default_timezone();
+        $timezone = self::date_default_timezone();
     }
-    return $timezone > '' ? $timezone : date_default_timezone();
+    return $timezone > '' ? $timezone : self::date_default_timezone();
   }
 
   /**
@@ -1336,7 +1340,7 @@ class DateApiManager {
    * @return string
    *   The timezone string.
    */
-  function date_get_timezone_db($handling, $timezone = NULL) {
+  public static function date_get_timezone_db($handling, $timezone = NULL) {
     switch ($handling) {
       case ('utc'):
       case ('site'):
@@ -1348,12 +1352,12 @@ class DateApiManager {
         if ($timezone == NULL) {
           // This shouldn't happen, since it's meaning is undefined. But we need
           // to fall back to *something* that's a legal timezone.
-          $timezone = date_default_timezone();
+          $timezone = self::date_default_timezone();
         }
         break;
       case ('none'):
       default:
-        $timezone = date_default_timezone();
+        $timezone = self::date_default_timezone();
         break;
     }
     return $timezone;
@@ -1362,7 +1366,7 @@ class DateApiManager {
   /**
    * Helper function for converting back and forth from '+1' to 'First'.
    */
-  function date_order_translated() {
+  public static function date_order_translated() {
     return array(
       '+1' => t('First', array(), array('context' => 'date_order')),
       '+2' => t('Second', array(), array('context' => 'date_order')),
@@ -1380,7 +1384,7 @@ class DateApiManager {
   /**
    * Creates an array of ordered strings, using English text when possible.
    */
-  function date_order() {
+  public static function date_order() {
     return array(
       '+1' => 'First',
       '+2' => 'Second',
@@ -1404,7 +1408,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the date range is valid, FALSE otherwise.
    */
-  function date_range_valid($string) {
+  public static function date_range_valid($string) {
     $matches = preg_match('@^(\-[0-9]+|[0-9]{4}):([\+|\-][0-9]+|[0-9]{4})$@', $string);
     return $matches < 1 ? FALSE : TRUE;
   }
@@ -1424,8 +1428,8 @@ class DateApiManager {
    * @return array
    *   A numerically indexed array, containing a minimum and maximum year.
    */
-  function date_range_years($string, $date = NULL) {
-    $this_year = date_format(date_now(), 'Y');
+  public static function date_range_years($string, $date = NULL) {
+    $this_year = date_format(self::date_now(), 'Y');
     list($min_year, $max_year) = explode(':', $string);
 
     // Valid patterns would be -5:+5, 0:+1, 2008:2010.
@@ -1472,8 +1476,8 @@ class DateApiManager {
    * @return string
    *   A min and max year string like '-3:+1'.
    */
-  function date_range_string($years) {
-    $this_year = date_format(date_now(), 'Y');
+  public static function date_range_string($years) {
+    $this_year = date_format(self::date_now(), 'Y');
 
     if ($years[0] < $this_year) {
       $min = '-' . ($this_year - $years[0]);
@@ -1496,12 +1500,12 @@ class DateApiManager {
   /**
    * Creates an array of date format types for use as an options list.
    */
-  function date_format_type_options() {
+  public static function date_format_type_options() {
     $options = array();
-    $format_types = system_get_date_types();
+    $format_types = DateFormat::loadMultiple();
     if (!empty($format_types)) {
       foreach ($format_types as $type => $type_info) {
-        $options[$type] = $type_info['title'] . ' (' . date_format_date(date_example_date(), $type) . ')';
+        $options[$type] = $type_info['title'] . ' (' . self::date_format_date(self::date_example_date(), $type) . ')';
       }
     }
     return $options;
@@ -1512,8 +1516,8 @@ class DateApiManager {
    *
    * This ensures a clear difference between month and day, and 12 and 24 hours.
    */
-  function date_example_date() {
-    $now = date_now();
+  public static function date_example_date() {
+    $now = self::date_now();
     if (date_format($now, 'M') == date_format($now, 'F')) {
       date_modify($now, '+1 month');
     }
@@ -1541,7 +1545,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the date is all day, FALSE otherwise.
    */
-  function date_is_all_day($string1, $string2, $granularity = 'second', $increment = 1) {
+  public static function date_is_all_day($string1, $string2, $granularity = 'second', $increment = 1) {
     if (empty($string1) || empty($string2)) {
       return FALSE;
     }
@@ -1570,9 +1574,9 @@ class DateApiManager {
       return FALSE;
     }
 
-    $tmp = date_seconds('s', TRUE, $increment);
+    $tmp = self::date_seconds('s', TRUE, $increment);
     $max_seconds = intval(array_pop($tmp));
-    $tmp = date_minutes('i', TRUE, $increment);
+    $tmp = self::date_minutes('i', TRUE, $increment);
     $max_minutes = intval(array_pop($tmp));
 
     // See if minutes and seconds are the maximum allowed for an increment or the
@@ -1614,7 +1618,7 @@ class DateApiManager {
   /**
    * Helper function to round minutes and seconds to requested value.
    */
-  function date_increment_round(&$date, $increment) {
+  public static function date_increment_round(&$date, $increment) {
     // Round minutes and seconds, if necessary.
     if (is_object($date) && $increment > 1) {
       $day = intval(date_format($date, 'j'));
@@ -1651,7 +1655,7 @@ class DateApiManager {
    * @return bool
    *   TRUE if the date is a valid date object, FALSE otherwise.
    */
-  function date_is_date($date) {
+  public static function date_is_date($date) {
     if (empty($date) || !is_object($date) || !empty($date->errors)) {
       return FALSE;
     }
@@ -1670,7 +1674,7 @@ class DateApiManager {
    *
    * @TODO Expand on this to work with all sorts of partial ISO dates.
    */
-  function date_make_iso_valid($iso_string) {
+  public static function date_make_iso_valid($iso_string) {
     // If this isn't a value that uses an ISO pattern, there is nothing to do.
     if (is_numeric($iso_string) || !preg_match(DATE_REGEX_ISO, $iso_string)) {
       return $iso_string;
@@ -1693,35 +1697,33 @@ class DateApiManager {
    * Helper function to retun the status of required date variables.
    */
   public static function date_api_status() {
-    $t = get_t();
-
     $error_messages = array();
     $success_messages = array();
 
-    $value = variable_get('date_default_timezone');
+    $value = \Drupal::config('date_api.settings')->get('date_default_timezone');
     if (isset($value)) {
-      $success_messages[] = $t('The timezone has been set to <a href="@regional_settings">@timezone</a>.', array('@regional_settings' => url('admin/config/regional/settings'), '@timezone' => $value));
+      $success_messages[] = t('The timezone has been set to <a href="@regional_settings">@timezone</a>.', array('@regional_settings' => Url::fromRoute('system.regional_settings'), '@timezone' => $value));
     }
     else {
-      $error_messages[] = $t('The Date API requires that you set up the <a href="@regional_settings">site timezone</a> to function correctly.', array('@regional_settings' => url('admin/config/regional/settings')));
+      $error_messages[] = t('The Date API requires that you set up the <a href="@regional_settings">site timezone</a> to function correctly.', array('@regional_settings' => Url::fromRoute('system.regional_settings')));
     }
 
-    $value = variable_get('date_first_day');
+    $value = \Drupal::config('date_api.settings')->get('date_first_day');
     if (isset($value)) {
-      $days = date_week_days();
-      $success_messages[] = $t('The first day of the week has been set to <a href="@regional_settings">@day</a>.', array('@regional_settings' => url('admin/config/regional/settings'), '@day' => $days[$value]));
+      $days = self::date_week_days();
+      $success_messages[] = t('The first day of the week has been set to <a href="@regional_settings">@day</a>.', array('@regional_settings' => Url::fromRoute('system.regional_settings'), '@day' => $days[$value]));
     }
     else {
-      $error_messages[] = $t('The Date API requires that you set up the <a href="@regional_settings">site first day of week settings</a> to function correctly.', array('@regional_settings' => url('admin/config/regional/settings')));
+      $error_messages[] = t('The Date API requires that you set up the <a href="@regional_settings">site first day of week settings</a> to function correctly.', array('@regional_settings' => Url::fromRoute('system.regional_settings')));
     }
 
-    $value = variable_get('date_format_medium');
+    $value = \Drupal::config('date_api.settings')->get('date_format_medium');
     if (isset($value)) {
-      $now = date_now();
-      $success_messages[] = $t('The medium date format type has been set to to @value. You may find it helpful to add new format types like Date, Time, Month, or Year, with appropriate formats, at <a href="@regional_date_time">Date and time</a> settings.', array('@value' => $now->format($value), '@regional_date_time' => url('admin/config/regional/date-time')));
+      $now = self::date_now();
+      $success_messages[] = t('The medium date format type has been set to to @value. You may find it helpful to add new format types like Date, Time, Month, or Year, with appropriate formats, at <a href="@regional_date_time">Date and time</a> settings.', array('@value' => $now->format($value), '@regional_date_time' => Url::fromRoute('system.date_format_list')));
     }
     else {
-      $error_messages[] = $t('The Date API requires that you set up the <a href="@regional_date_time">system date formats</a> to function correctly.', array('@regional_date_time' => url('admin/config/regional/date-time')));
+      $error_messages[] = t('The Date API requires that you set up the <a href="@regional_date_time">system date formats</a> to function correctly.', array('@regional_date_time' => Url::fromRoute('system.date_format_list')));
     }
 
     return array('errors', $error_messages, 'success' => $success_messages);
@@ -1731,16 +1733,16 @@ class DateApiManager {
   /**
    * Helper function for creating a date object out of user input.
    */
-  function date_text_input_date($element, $input) {
+  public static function date_text_input_date($element, $input) {
     if (empty($input) || !is_array($input) || !array_key_exists('date', $input) || empty($input['date'])) {
       return NULL;
     }
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = self::date_format_order($element['#date_format']);
     $date = new DateObject($input['date'], $element['#date_timezone'], $element['#date_format']);
     if (is_object($date)) {
       $date->limitGranularity($granularity);
       if ($date->validGranularity($granularity, $element['#date_flexible'])) {
-        date_increment_round($date, $element['#date_increment']);
+        self::date_increment_round($date, $element['#date_increment']);
       }
       return $date;
     }
@@ -1750,7 +1752,7 @@ class DateApiManager {
   /**
    * Create replacement values for deprecated timezone names.
    */
-  function _date_timezone_replacement($old) {
+  public static function _date_timezone_replacement($old) {
     $replace = array(
       'Brazil/Acre' => 'America/Rio_Branco',
       'Brazil/DeNoronha' => 'America/Noronha',

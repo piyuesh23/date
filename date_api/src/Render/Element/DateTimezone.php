@@ -9,7 +9,7 @@ namespace Drupal\date_api\Render\Element;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
-use Drupal\Core\Render\Element\FormElement;
+use Drupal\date_api\DateApiManager;
 
 /**
  * Provides a one-line text field form element.
@@ -26,7 +26,7 @@ class DateTimezone extends DateApiElementBase {
     return array(
       '#input' => TRUE,
       '#tree' => TRUE,
-      '#date_timezone' => date_default_timezone(),
+      '#date_timezone' => DateApiManager::date_default_timezone(),
       '#date_flexible' => 0,
       '#date_format' => \Drupal::config('core.date_formats.short')->get('pattern', 'm/d/Y - H:i'),
       '#date_text_parts' => array(),
@@ -62,17 +62,23 @@ class DateTimezone extends DateApiElementBase {
    * Process an individual date element.
    */
   protected function process(&$element, &$form_state, $form) {
-    if (date_hidden_element($element)) {
+    if (DateApiManager::date_hidden_element($element)) {
       return $element;
     }
 
     $element['#tree'] = TRUE;
-    $label = theme('date_part_label_timezone', array('part_type' => 'select', 'element' => $element));
+    $label_element = array(
+      '#part_type' => 'select',
+      '#element' => $element,
+      '#theme' => 'date_part_label_timezone'
+    );
+
+    $label = drupal_render($label_element);
     $element['timezone'] = array(
       '#type' => 'select',
       '#title' => $label,
       '#title_display' => $element['#date_label_position'] == 'above' ? 'before' : 'invisible',
-      '#options' => date_timezone_names($element['#required']),
+      '#options' => DateApiManager::date_timezone_names($element['#required']),
       '#value' => $element['#value'],
       '#weight' => $element['#weight'],
       '#required' => $element['#required'],
@@ -89,7 +95,7 @@ class DateTimezone extends DateApiElementBase {
     $context = array(
       'form' => $form,
     );
-    drupal_alter('date_timezone_process', $element, $form_state, $context);
+    \Drupal::moduleHandler()->alter('date_timezone_process', $element, $form_state, $context);
   }
 
   /**
@@ -101,7 +107,7 @@ class DateTimezone extends DateApiElementBase {
    *
    */
   protected function validate(&$element, FormStateInterface $form_state, &$complete_form) {
-    if (date_hidden_element($element)) {
+    if (DateApiManager::date_hidden_element($element)) {
       return;
     }
     $form_state->setValue($element, $element['#value']['timezone']);

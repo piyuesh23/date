@@ -9,6 +9,7 @@ namespace Drupal\date_api\Render\Element;
 
 use Drupal\Core\Render\Element\FormElement;
 use Drupal\date_api\DateObject;
+use Drupal\date_api\DateApiManager;
 
 /**
  * Provides a base class for date elements.
@@ -21,7 +22,7 @@ abstract class DateApiElementBase extends FormElement {
    * Create a date object from a datetime string value.
    */
   public static function getDefaultDate($element) {
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
     $default_value = $element['#default_value'];
     $format = DATE_FORMAT_DATETIME;
 
@@ -49,7 +50,7 @@ abstract class DateApiElementBase extends FormElement {
     if (is_object($date)) {
       $date->limitGranularity($granularity);
       if ($date->validGranularity($granularity, $element['#date_flexible'])) {
-        date_increment_round($date, $element['#date_increment']);
+        DateApiManager::date_increment_round($date, $element['#date_increment']);
       }
       return $date;
     }

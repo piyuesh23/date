@@ -9,8 +9,8 @@ namespace Drupal\date_api\Render\Element;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
-use Drupal\Core\Render\Element\FormElement;
 use Drupal\date_api\DateObject;
+use Drupal\date_api\DateApiManager;
 use Drupal\Component\Utility\NestedArray;
 
 /**
@@ -28,7 +28,7 @@ class DateText extends DateApiElementBase {
     return array(
       '#input' => TRUE,
       '#tree' => TRUE,
-      '#date_timezone' => date_default_timezone(),
+      '#date_timezone' => DateApiManager::date_default_timezone(),
       '#date_flexible' => 0,
       '#date_format' => \Drupal::config('core.date_formats.short')->get('pattern', 'm/d/Y - H:i'),
       '#date_text_parts' => array(),
@@ -59,11 +59,11 @@ class DateText extends DateApiElementBase {
     elseif (!empty($element['#default_value'])) {
       $date = self::getDefaultDate($element);
     }
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
     $formats = array('year' => 'Y', 'month' => 'n', 'day' => 'j', 'hour' => 'H', 'minute' => 'i', 'second' => 's');
     foreach ($granularity as $field) {
       if ($field != 'timezone') {
-        $return[$field] = date_is_date($date) ? $date->format($formats[$field]) : '';
+        $return[$field] = DateApiManager::date_is_date($date) ? $date->format($formats[$field]) : '';
       }
     }
     return $return;
@@ -73,7 +73,7 @@ class DateText extends DateApiElementBase {
    * Process an individual date element.
    */
   protected function process(&$element, &$form_state, $form) {
-    if (date_hidden_element($element)) {
+    if (DateApiManager::date_hidden_element($element)) {
       return $element;
     }
 
@@ -83,10 +83,10 @@ class DateText extends DateApiElementBase {
     $element['date']['#type'] = 'textfield';
     $element['date']['#weight'] = !empty($element['date']['#weight']) ? $element['date']['#weight'] : $element['#weight'];
     $element['date']['#attributes'] = array('class' => isset($element['#attributes']['class']) ? $element['#attributes']['class'] += array('date-date') : array('date-date'));
-    $now = date_example_date();
+    $now = DateApiManager::date_example_date();
     $element['date']['#title'] = t('Date');
     $element['date']['#title_display'] = 'invisible';
-    $element['date']['#description'] = ' ' . t('Format: @date', array('@date' => date_format_date(date_example_date(), 'custom', $element['#date_format'])));
+    $element['date']['#description'] = ' ' . t('Format: @date', array('@date' => DateApiManager::date_format_date(DateApiManager::date_example_date(), 'custom', $element['#date_format'])));
     $element['date']['#ajax'] = !empty($element['#ajax']) ? $element['#ajax'] : FALSE;
 
     // Keep the system from creating an error message for the sub-element.
@@ -106,7 +106,10 @@ class DateText extends DateApiElementBase {
     $context = array(
       'form' => $form,
     );
-    drupal_alter('date_text_process', $element, $form_state, $context);
+
+    \Drupal::moduleHandler()->alter('date_text_process', $element, $form_state, $context);
+
+    return $element;
   }
 
   /**
@@ -124,7 +127,7 @@ class DateText extends DateApiElementBase {
         return NULL;
       }
     }
-    $granularity = date_format_order($element['#date_format']);
+    $granularity = DateApiManager::date_format_order($element['#date_format']);
     if (isset($input['ampm'])) {
       if ($input['ampm'] == 'pm' && $input['hour'] < 12) {
         $input['hour'] += 12;
@@ -136,7 +139,7 @@ class DateText extends DateApiElementBase {
     unset($input['ampm']);
 
     // Make the input match the granularity.
-    foreach (date_nongranularity($granularity) as $part) {
+    foreach (DateApiManager::date_nongranularity($granularity) as $part) {
       unset($input[$part]);
     }
 
@@ -144,7 +147,7 @@ class DateText extends DateApiElementBase {
     if (is_object($date)) {
       $date->limitGranularity($granularity);
       if ($date->validGranularity($granularity, $element['#date_flexible'])) {
-        date_increment_round($date, $element['#date_increment']);
+        DateApiManager::date_increment_round($date, $element['#date_increment']);
       }
       return $date;
     }
@@ -161,7 +164,7 @@ class DateText extends DateApiElementBase {
    */
   protected function validate(&$element, FormStateInterface $form_state, &$complete_form) {
 
-    if (date_hidden_element($element)) {
+    if (DateApiManager::date_hidden_element($element)) {
       return;
     }
 
@@ -169,12 +172,12 @@ class DateText extends DateApiElementBase {
       return;
     }
     $input_exists = NULL;
-    $input = NestedArray::setValue($form_state['values'], $element['#parents'], $input_exists);
+    NestedArray::setValue($form_state['values'], $element['#parents'], $input_exists);
 
-    drupal_alter('date_text_pre_validate', $element, $form_state, $input);
+    \Drupal::moduleHandler()->alter('date_text_pre_validate', $element, $form_state, $form_state['values']);
 
     $label = !empty($element['#date_title']) ? $element['#date_title'] : (!empty($element['#title']) ? $element['#title'] : '');
-    $date = date_text_input_date($element, $input);
+    $date = DateApiManager::date_text_input_date($element, $form_state['values']);
 
     // If the field has errors, display them.
     // If something was input but there is no date, the date is invalid.
