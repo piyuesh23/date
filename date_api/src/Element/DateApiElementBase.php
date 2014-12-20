@@ -5,7 +5,7 @@
  * Contains \Drupal\date_api\Element\DateElementBase.
  */
 
-namespace Drupal\date_api\Render\Element;
+namespace Drupal\date_api\Element;
 
 use Drupal\Core\Render\Element\FormElement;
 use Drupal\date_api\DateObject;

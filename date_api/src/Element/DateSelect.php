@@ -5,7 +5,7 @@
  * Contains \Drupal\date_api\Render\Element\DateSelect.
  */
 
-namespace Drupal\date_api\Render\Element;
+namespace Drupal\date_api\Element;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
@@ -34,11 +34,13 @@ class DateSelect extends DateApiElementBase {
       '#date_increment' => 1,
       '#date_year_range' => '-3:+3',
       '#date_label_position' => 'above',
+      '#process' => array(
+        array($class, 'processSelect'),
+      ),
+      '#theme' => 'select',
       '#theme_wrappers' => array('date_select'),
-      '#process' => array($class, 'process'),
-      '#value_callback' => array($class, 'valueCallback'),
-
     );
+
     // @TODO: Check what ctools come up with.
     // if (module_exists('ctools')) {
     // $date_base['#pre_render'] = array('ctools_dependent_pre_render');
@@ -69,9 +71,10 @@ class DateSelect extends DateApiElementBase {
   }
 
   /**
-   * Process an individual date element.
+   * Processes a checkboxes form element.
    */
-  protected function process(&$element, &$form_state, $form) {
+  public static function processSelect(&$element, FormStateInterface $form_state, &$complete_form) {
+    print "life";exit;
     if (DateApiManager::date_hidden_element($element)) {
       return $element;
     }

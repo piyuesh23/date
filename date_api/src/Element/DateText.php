@@ -5,7 +5,7 @@
  * Contains \Drupal\date_api\Render\Element\DateText.
  */
 
-namespace Drupal\date_api\Render\Element;
+namespace Drupal\date_api\Element;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
